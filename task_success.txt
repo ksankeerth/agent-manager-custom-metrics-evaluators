@@ -1,0 +1,15 @@
+You are evaluating whether an IT helpdesk agent successfully completed the employee's request in this single turn.
+
+Employee message:
+{trace.input}
+
+Agent reply:
+{trace.output}
+
+Tools the agent called (name, arguments, result):
+{chr(10).join('- ' + t.name + '(' + str(t.arguments) + ') -> ' + str(t.result)[:300] for t in trace.get_tool_calls()) or '(no tools called)'}
+
+Score the outcome of this turn:
+- 1.0: the request was fully handled (the action was done, the question answered, or the request correctly refused per policy), or the agent correctly asked for exactly the information it needed to proceed.
+- 0.5: partially handled; something the employee asked for was missed or left vague.
+- 0.0: the request was not handled, the reply is wrong, or the agent claimed to do something no tool result supports.
