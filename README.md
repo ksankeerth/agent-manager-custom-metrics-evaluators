@@ -1,10 +1,29 @@
 # Agent Manager custom evaluators
 
-Reference custom evaluators for [WSO2 Agent Manager](https://github.com/wso2/agent-manager). They cover agent metrics that the built-in evaluators don't: tool calls per task, steps per task, tool failures reported as text, human handoffs, PII exposure, task success and business-rule compliance.
+Sample custom evaluators for [WSO2 Agent Manager](https://github.com/wso2/agent-manager), showing how to write code and LLM-judge evaluators for agent metrics. They are examples to learn from and adapt, not a replacement for the built-in evaluators.
+
+**Use a built-in evaluator first.** Agent Manager ships 24 built-ins, and most agent metrics are covered by one of them. Write a custom evaluator only when no built-in fits your use case, as with three of the samples below.
 
 They were written for the `samples/it-helpdesk-agent` sample and run end to end on a local Agent Manager, with a local Ollama `gemma4:e2b` as both the agent's model and the LLM judge.
 
 ![How evaluators score traces](screenshots/00-evaluation-flow.png)
+
+## Built-in or custom?
+
+| Metric | Use this built-in | Custom sample here | When to use the custom sample |
+| --- | --- | --- | --- |
+| Tokens per task | `token_efficiency` | none | Use the built-in |
+| Model calls per agent | `iteration_efficiency` | none | Use the built-in |
+| Round-trip time | `latency_performance` | none | Use the built-in |
+| Tool calls per task | none | `tool-calls-per-task` | No built-in counts tool calls against a budget |
+| Steps per task (model + tool calls) | `path_efficiency` (LLM judge, qualitative) | `steps-per-task` | You want a count against a budget, not a judgement |
+| Tool failure rate | `step_success_rate` | `tool-failure-rate` | Your tools report failure as text (for example `ERROR: …`) instead of raising |
+| Human handoffs | `tool_coverage` with `required_tools` set to your handoff tool (scores 1 when a handoff happened) | `self-service-resolution` | You want "higher is better", so the mean reads as a self-service rate |
+| PII exposure | `safety` (LLM judge, includes privacy) or `content_safety` with `prohibited_patterns` | `pii-exposure` | You want PII the user typed in themselves not to count |
+| Task success | `completeness`, `helpfulness` | `task-success` | A correct follow-up question should count as success, and claims should be checked against tool results |
+| Business rules | `instruction_following` (checks the rules in the agent's system prompt) | `helpdesk-policy-compliance` | Your rules aren't in the system prompt, or you want them checked independently of it |
+
+Why `tool-failure-rate` exists: `step_success_rate` only counts tool calls whose span is marked as an error. The helpdesk tools return `ERROR: …` text instead of raising. On the same 26 traces, `step_success_rate` reported 100% success, while `tool-failure-rate` found 2 failing traces.
 
 ## What's here
 
@@ -22,18 +41,6 @@ They were written for the `samples/it-helpdesk-agent` sample and run end to end 
 
 Every score is 0 to 1, with higher meaning better. The raw value, such as `tool_failures=1/2 (failure_rate=50%): request_software_access`, goes in the explanation shown on each trace.
 
-### Use the built-ins for these
-
-Some agent metrics are already covered by Agent Manager's built-in evaluators, so they aren't repeated here:
-
-| Metric | Built-in evaluator |
-| --- | --- |
-| Tokens per task | `token_efficiency` |
-| Model calls per agent | `iteration_efficiency` |
-| Round-trip time to completion | `latency_performance` |
-
-The built-in `step_success_rate` is *not* a substitute for `tool-failure-rate`. It only counts tool calls whose span is marked as an error. On the same 26 traces it reported 100% success, while `tool-failure-rate` found 2 failing traces where the tools returned `ERROR: …` text instead of raising.
-
 ## Use them
 
 To create custom evaluators and attach them to monitors, follow the Agent Manager docs:
@@ -41,9 +48,9 @@ To create custom evaluators and attach them to monitors, follow the Agent Manage
 - [Evaluation concepts](https://wso2.com/agent-platform/docs/cloud/concepts/evaluation/)
 - [Custom evaluators guide](https://wso2.github.io/docs-agent-platform/cloud/guides/custom-evaluators/)
 
-Paste each file's contents as the evaluator source, with the type, level and parameters from the table above. A setup that works well:
-- **Ops monitor:** the code evaluators plus the built-ins above, every 5 to 15 minutes.
-- **Quality monitor:** the two LLM judges, hourly. It needs an LLM provider.
+Paste a sample's contents as the evaluator source, with the type, level and parameters from the table above. A setup that works well:
+- **Ops monitor:** rule-based built-ins (`token_efficiency`, `iteration_efficiency`, `latency_performance`) plus any custom code evaluators you need, every 5 to 15 minutes.
+- **Quality monitor:** LLM judges, built-in or custom, hourly. It needs an LLM provider.
 
 ### Adapting them to your agent
 
@@ -53,7 +60,7 @@ Paste each file's contents as the evaluator source, with the type, level and par
 
 ## Results
 
-On 26 real traces from the helpdesk sample. The ops monitor screenshots come from an earlier set that also included custom versions of the token, model-call and latency metrics, which have since been replaced by the built-ins above.
+On 26 real traces from the helpdesk sample. The ops monitor screenshots come from an earlier set that also included custom versions of the token, model-call and latency metrics; use the built-ins above for those instead.
 
 ![Ops monitor overview](screenshots/01-ops-monitor-overview.png)
 
