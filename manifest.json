@@ -138,5 +138,88 @@
         "default": "AcmeCorp"
       }
     ]
+  },
+  {
+    "identifier": "input-abuse",
+    "displayName": "Input Abuse / Injection",
+    "type": "llm_judge",
+    "level": "trace",
+    "file": "input_abuse.txt",
+    "description": "LLM judge on the user's input (trace.input): 1.0 = clean, 0.0 = clear abuse or prompt-injection attempt.",
+    "tags": [
+      "safety",
+      "input"
+    ],
+    "configSchema": []
+  },
+  {
+    "identifier": "cost-per-request",
+    "displayName": "Cost per Request",
+    "type": "code",
+    "level": "trace",
+    "file": "cost_per_request.py",
+    "description": "USD cost of one request from a pricing table; raw cost in the explanation, score vs a per-request budget.",
+    "tags": [
+      "cost"
+    ],
+    "configSchema": [
+      {
+        "key": "pricing_json",
+        "type": "string",
+        "description": "JSON map: model -> {input, cached_input, output} USD per 1M tokens",
+        "required": false,
+        "default": "{\"gpt-4o-mini\": {\"input\": 0.15, \"cached_input\": 0.075, \"output\": 0.6}}"
+      },
+      {
+        "key": "cached_included_in_input",
+        "type": "boolean",
+        "description": "True if input tokens already include cached tokens (OpenAI style)",
+        "required": false,
+        "default": true
+      },
+      {
+        "key": "max_cost_usd",
+        "type": "float",
+        "description": "Cost per request that still scores 1.0",
+        "required": false,
+        "default": 0.001,
+        "min": 0
+      }
+    ]
+  },
+  {
+    "identifier": "cost-per-llm-call",
+    "displayName": "Cost per LLM Call",
+    "type": "code",
+    "level": "llm",
+    "file": "cost_per_llm_call.py",
+    "description": "USD cost of each LLM call; grouped by vendor/model in the console breakdown.",
+    "tags": [
+      "cost"
+    ],
+    "configSchema": [
+      {
+        "key": "pricing_json",
+        "type": "string",
+        "description": "JSON map: model -> {input, cached_input, output} USD per 1M tokens",
+        "required": false,
+        "default": "{\"gpt-4o-mini\": {\"input\": 0.15, \"cached_input\": 0.075, \"output\": 0.6}}"
+      },
+      {
+        "key": "cached_included_in_input",
+        "type": "boolean",
+        "description": "True if input tokens already include cached tokens (OpenAI style)",
+        "required": false,
+        "default": true
+      },
+      {
+        "key": "max_cost_usd",
+        "type": "float",
+        "description": "Cost per LLM call that still scores 1.0",
+        "required": false,
+        "default": 0.0005,
+        "min": 0
+      }
+    ]
   }
 ]
